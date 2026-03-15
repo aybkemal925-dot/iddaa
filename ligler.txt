@@ -1,0 +1,524 @@
+MACKOLIK.COM - LİGLER LİSTESİ		
+		
+Lig Adı	Seviye/Kategori	
+TÜRKİYE LİGLERİ		
+Trendyol Süper Lig	1. Kademe	
+Trendyol 1. Lig	2. Kademe	
+		
+İNGİLTERE		
+Premier Lig	1. Kademe	
+Championship	2. Kademe	
+1.Lig	3. Kademe	
+2.Lig	4. Kademe	
+		
+İSPANYA		
+LaLiga	1. Kademe	
+2.Lig	2. Kademe	
+		
+İTALYA		
+Serie A	1. Kademe	
+Serie B	2. Kademe	
+		
+ALMANYA		
+Bundesliga	1. Kademe	
+2.Bundesliga	2. Kademe	
+		
+FRANSA		
+Ligue 1	1. Kademe	
+Ligue 2	2. Kademe	
+Ulusal Lig 1	3. Kademe	
+		
+HOLLANDA		
+Eredivisie	1. Kademe	
+Eerste Divisie	2. Kademe	
+		
+PORTEKİZ		
+Premier Lig	1. Kademe	
+2.Lig	2. Kademe	
+		
+BELÇİKA		
+Pro Lig	1. Kademe	
+Challenger Pro Lig	2. Kademe	
+		
+AVRUPA DİĞER ÜLKELER		
+Bundesliga	1. Kademe	
+1.Lig	2. Kademe	
+Czech Liga	1. Kademe	
+FNL	2. Kademe	
+Superliga	1. Kademe	
+1.Lig	2. Kademe	
+	3. Kademe	
+	4. Kademe	
+Veikkausliiga	1. Kademe	
+Ykkösliiga	2. Kademe	
+	3. Kademe	
+		
+		
+		
+		
+		
+1.HNL	1. Kademe	
+	2. Kademe	
+Premier Lig	1. Kademe	
+	2. Kademe	
+Premiership	1. Kademe	
+Championship	2. Kademe	
+	3. Kademe	
+	4. Kademe	
+	1. Kademe	
+Allsvenskan	1. Kademe	
+Superettan	2. Kademe	
+	3. Kademe	
+	3. Kademe	
+Süper Lig	1. Kademe	
+Challenge Lig	2. Kademe	
+	3. Kademe	
+	1. Kademe	
+	2. Kademe	
+	3. Kademe	
+NB I	1. Kademe	
+	2. Kademe	
+Eliteserien	1. Kademe	
+1.Lig	2. Kademe	
+	3. Kademe	
+	3. Kademe	
+Ekstraklasa	1. Kademe	
+1.Lig	2. Kademe	
+2.Lig	3. Kademe	
+1.Lig	1. Kademe	
+2.Lig	2. Kademe	
+Premier Lig	1. Kademe	
+FNL	2. Kademe	
+Süper Lig	1. Kademe	
+1.Lig	2. Kademe	
+Süper Lig	1. Kademe	
+2.Lig	2. Kademe	
+1.SNL	1. Kademe	
+Premier Lig	1. Kademe	
+Süper Lig	1. Kademe	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+AMERİKA - KUZEY AMERİKA		
+MLS	1. Kademe	
+AMERİKA - GÜNEY AMERİKA		
+Premier Lig 1.Aşama	1. Kademe	
+Serie A	1. Kademe	
+Premier Lig	1. Kademe	
+Primera A Apertura	1. Kademe	
+Pro Lig	1. Kademe	
+Profesyonel Lig Apertura	1. Kademe	
+Profesyonel Lig Clausura		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura	1. Kademe	
+Premier Lig Apertura		
+Premier Lig	1. Kademe	
+		
+AMERİKA - ORTA AMERİKA		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura		
+Premier Lig Clausura Grup A	1. Kademe	
+Premier Lig Clausura Grup B		
+Ulusal Lig Clausura	1. Kademe	
+Ulusal Lig Clausura 1.Aşama		
+Primera Lig Clausura	1. Kademe	
+Primera Lig Apertura		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura		
+		
+		
+		
+		
+		
+ASYA - JAPONYA & ÇİN		
+J1 100.Yıl Vizyon Ligi Batı Grubu	1. Kademe	
+J1 100.Yıl Vizyon Ligi Doğu Grubu	1. Kademe	
+Süper Lig	1. Kademe	
+K Lig 1	1. Kademe	
+		
+AVUSTRALYA		
+A-Lig	1. Kademe	
+		
+UEFA ULUSLARARASI KUPALAR		
+UEFA Uluslar Ligi A Ligi Grup 1-4	Milli	
+UEFA Uluslar Ligi B Ligi Grup 1-4	Milli	
+UEFA Uluslar Ligi C Ligi Grup 1-4	Milli	
+UEFA Uluslar Ligi D Ligi Grup 1-2	Milli	
+		
+DİĞER ULUSLARARASI KUPALAR		
+Copa Libertadores	Kulüp	
+Copa Sudamericana	Kulüp	
+CONCACAF Ligler Kupası	Kulüp	
+CONCACAF Gold Cup	Milli	
+Dünya Kupası 2026	Milli	
+Dünya Kupası 2026 Elemeler	Milli	
+Copa America	Milli	
+Euro 2024	Milli	
+Euro 2024 Elemeler	Milli	
+Asya Kupası 2023	Milli	
+Asya Kupası 2027 Elemeler	Milli	
+Olimpiyatlar 2024	Milli	
+FIFA Kulüpler Dünya Kupası	Kulüp	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		MACKOLIK.COM - LİGLER LİSTESİ		
+		
+Lig Adı	Seviye/Kategori	
+TÜRKİYE LİGLERİ		
+Trendyol Süper Lig	1. Kademe	
+Trendyol 1. Lig	2. Kademe	
+		
+İNGİLTERE		
+Premier Lig	1. Kademe	
+Championship	2. Kademe	
+1.Lig	3. Kademe	
+2.Lig	4. Kademe	
+		
+İSPANYA		
+LaLiga	1. Kademe	
+2.Lig	2. Kademe	
+		
+İTALYA		
+Serie A	1. Kademe	
+Serie B	2. Kademe	
+		
+ALMANYA		
+Bundesliga	1. Kademe	
+2.Bundesliga	2. Kademe	
+		
+FRANSA		
+Ligue 1	1. Kademe	
+Ligue 2	2. Kademe	
+Ulusal Lig 1	3. Kademe	
+		
+HOLLANDA		
+Eredivisie	1. Kademe	
+Eerste Divisie	2. Kademe	
+		
+PORTEKİZ		
+Premier Lig	1. Kademe	
+2.Lig	2. Kademe	
+		
+BELÇİKA		
+Pro Lig	1. Kademe	
+Challenger Pro Lig	2. Kademe	
+		
+AVRUPA DİĞER ÜLKELER		
+Bundesliga	1. Kademe	
+1.Lig	2. Kademe	
+Czech Liga	1. Kademe	
+FNL	2. Kademe	
+Superliga	1. Kademe	
+1.Lig	2. Kademe	
+	3. Kademe	
+	4. Kademe	
+Veikkausliiga	1. Kademe	
+Ykkösliiga	2. Kademe	
+	3. Kademe	
+		
+		
+		
+		
+		
+1.HNL	1. Kademe	
+	2. Kademe	
+Premier Lig	1. Kademe	
+	2. Kademe	
+Premiership	1. Kademe	
+Championship	2. Kademe	
+	3. Kademe	
+	4. Kademe	
+	1. Kademe	
+Allsvenskan	1. Kademe	
+Superettan	2. Kademe	
+	3. Kademe	
+	3. Kademe	
+Süper Lig	1. Kademe	
+Challenge Lig	2. Kademe	
+	3. Kademe	
+	1. Kademe	
+	2. Kademe	
+	3. Kademe	
+NB I	1. Kademe	
+	2. Kademe	
+Eliteserien	1. Kademe	
+1.Lig	2. Kademe	
+	3. Kademe	
+	3. Kademe	
+Ekstraklasa	1. Kademe	
+1.Lig	2. Kademe	
+2.Lig	3. Kademe	
+1.Lig	1. Kademe	
+2.Lig	2. Kademe	
+Premier Lig	1. Kademe	
+FNL	2. Kademe	
+Süper Lig	1. Kademe	
+1.Lig	2. Kademe	
+Süper Lig	1. Kademe	
+2.Lig	2. Kademe	
+1.SNL	1. Kademe	
+Premier Lig	1. Kademe	
+Süper Lig	1. Kademe	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+AMERİKA - KUZEY AMERİKA		
+MLS	1. Kademe	
+AMERİKA - GÜNEY AMERİKA		
+Premier Lig 1.Aşama	1. Kademe	
+Serie A	1. Kademe	
+Premier Lig	1. Kademe	
+Primera A Apertura	1. Kademe	
+Pro Lig	1. Kademe	
+Profesyonel Lig Apertura	1. Kademe	
+Profesyonel Lig Clausura		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura	1. Kademe	
+Premier Lig Apertura		
+Premier Lig	1. Kademe	
+		
+AMERİKA - ORTA AMERİKA		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura		
+Premier Lig Clausura Grup A	1. Kademe	
+Premier Lig Clausura Grup B		
+Ulusal Lig Clausura	1. Kademe	
+Ulusal Lig Clausura 1.Aşama		
+Primera Lig Clausura	1. Kademe	
+Primera Lig Apertura		
+Premier Lig Apertura	1. Kademe	
+Premier Lig Clausura		
+		
+		
+		
+		
+		
+ASYA - JAPONYA & ÇİN		
+J1 100.Yıl Vizyon Ligi Batı Grubu	1. Kademe	
+J1 100.Yıl Vizyon Ligi Doğu Grubu	1. Kademe	
+Süper Lig	1. Kademe	
+K Lig 1	1. Kademe	
+		
+AVUSTRALYA		
+A-Lig	1. Kademe	
+		
+UEFA ULUSLARARASI KUPALAR		
+UEFA Uluslar Ligi A Ligi Grup 1-4	Milli	
+UEFA Uluslar Ligi B Ligi Grup 1-4	Milli	
+UEFA Uluslar Ligi C Ligi Grup 1-4	Milli	
+UEFA Uluslar Ligi D Ligi Grup 1-2	Milli	
+		
+DİĞER ULUSLARARASI KUPALAR		
+Copa Libertadores	Kulüp	
+Copa Sudamericana	Kulüp	
+CONCACAF Ligler Kupası	Kulüp	
+CONCACAF Gold Cup	Milli	
+Dünya Kupası 2026	Milli	
+Dünya Kupası 2026 Elemeler	Milli	
+Copa America	Milli	
+Euro 2024	Milli	
+Euro 2024 Elemeler	Milli	
+Asya Kupası 2023	Milli	
+Asya Kupası 2027 Elemeler	Milli	
+Olimpiyatlar 2024	Milli	
+FIFA Kulüpler Dünya Kupası	Kulüp	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
