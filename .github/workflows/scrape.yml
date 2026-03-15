@@ -1,0 +1,96 @@
+name: IddaaPro Scraper
+
+on:
+  # Manuel tetikleme — tarih araligi gir
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Baslangic tarihi (YYYY-MM-DD)'
+        required: true
+        default: '2024-08-01'
+      end_date:
+        description: 'Bitis tarihi (YYYY-MM-DD)'
+        required: true
+        default: '2025-03-15'
+      max_hours:
+        description: 'Max calisma suresi (saat)'
+        required: false
+        default: '5.5'
+
+  # Zamanlanmis calisma — her gun 03:00 UTC (06:00 TR)
+  # Bunu aktif etmek icin asagidaki satirin basindaki # isaretini kaldir
+  # schedule:
+  #   - cron: '0 3 * * *'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350  # 5 saat 50 dk
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install Firefox
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: 'latest'
+
+      - name: Install Geckodriver
+        uses: browser-actions/setup-geckodriver@latest
+        with:
+          geckodriver-version: 'latest'
+
+      - name: Download previous data
+        continue-on-error: true
+        run: |
+          mkdir -p output
+          # Onceki artifact'tan veriyi indir (varsa)
+          if [ -f output/iddaa_data.xlsx ]; then
+            echo "Onceki veri mevcut"
+          fi
+
+      - name: Restore previous artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: iddaa-data
+          path: output/
+        continue-on-error: true
+
+      - name: Run scraper
+        run: |
+          python scraper_cli.py \
+            --start "${{ github.event.inputs.start_date || '2024-08-01' }}" \
+            --end "${{ github.event.inputs.end_date || '2025-03-15' }}" \
+            --output output/iddaa_data.xlsx \
+            --max-hours ${{ github.event.inputs.max_hours || '5.5' }} \
+            --resume
+
+      - name: Upload data as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iddaa-data
+          path: |
+            output/iddaa_data.xlsx
+            progress.json
+          retention-days: 90
+
+      - name: Commit data to repo
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f output/iddaa_data.xlsx progress.json || true
+          git diff --staged --quiet || git commit -m "Scraper veri guncelleme: $(date +'%Y-%m-%d %H:%M')"
+          git push || true

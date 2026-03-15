@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+geckodriver.exe
+geckodriver.log
+debug_*.html
+*.lnk
+Yeni klasör/
+mobile/
+node_modules/
+package-lock.json
+images.ico
+images.jpg

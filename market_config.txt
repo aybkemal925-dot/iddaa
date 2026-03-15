@@ -1,0 +1,17 @@
+1. Çifte Şans (1X, 12, X2)
+2. İlk Yarı Sonucu (İY1, İY0, İY2)
+3. Alt/Üst 0.5
+4. Alt/Üst 1.5
+5. Alt/Üst 2.5
+6. Alt/Üst 3.5
+7. Alt/Üst 4.5
+8. Karşılıklı Gol (Var, Yok)
+9. Handikap (-1) (1, X, 2)
+10. İlk Yarı Alt/Üst (farklı eşikler)
+11. İlk Yarı/Maç Sonucu (9 kombine)
+12. Toplam gol verisi
++ Takım 1 - 1.5 Üst
++ Takım 1 - 2.5 Üst
++ Takım 2 - 1.5 Üst
++ Takım 2 - 2.5 Üst
+13 Toplam gol 0-1,2-3,4-5,6+
