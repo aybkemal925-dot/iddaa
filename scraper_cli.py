@@ -777,6 +777,7 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
     if match_date:
         row['mac_tarihi'] = match_date.strftime('%d.%m.%Y')
     label = summary.get('ev_sahibi', '')
+    row['_http_failed'] = False
 
     urls_to_try = [summary['iddaa_link']]
     overview = summary.get('overview_link', '')
@@ -789,7 +790,16 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
         for attempt in range(max_retries):
             try:
                 time.sleep(_throttle_delay)
-                resp = _SESSION.get(url, timeout=12, allow_redirects=True)
+                resp = _SESSION.get(url, timeout=12, allow_redirects=False)
+                # Redirect varsa /iddaa/ dusebilir, manual takip et
+                if resp.status_code in (301, 302, 303, 307, 308):
+                    loc = resp.headers.get('Location', '')
+                    if loc and '/iddaa/' not in loc and '/iddaa/' in url:
+                        # Redirect iddaa'yi kaldiriyor, bu URL oran vermez
+                        row['_http_failed'] = True
+                        return row
+                    resp = _SESSION.get(loc if loc.startswith('http') else f'https://www.mackolik.com{loc}',
+                                       timeout=12, allow_redirects=True)
                 if resp.status_code == 404:
                     break
                 if resp.status_code in (500, 502, 503, 429):
@@ -802,6 +812,10 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
                 resp.raise_for_status()
                 _throttle_ok()
                 html = resp.text
+                # Iddaa widget yoksa bu sayfa oran vermiyor
+                if 'widget-iddaa-markets' not in html:
+                    row['_http_failed'] = True
+                    return row
                 hdr = _parse_header_bs4(html)
                 if not row.get('mac_tarihi') and hdr.get('mac_tarihi'):
                     row['mac_tarihi'] = hdr['mac_tarihi']
@@ -817,7 +831,26 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
                     time.sleep((attempt + 1) * 1)
                 else:
                     pass
+    row['_http_failed'] = True
     return row
+
+
+def scrape_match_selenium(driver, url: str, market_keys=None) -> dict:
+    """Selenium ile mac detay sayfasina gidip oranlari cek."""
+    result = {}
+    try:
+        driver.get(url)
+        time.sleep(2)
+        # Iddaa tab disabled mi kontrol et
+        html = driver.page_source
+        if 'widget-iddaa-markets' not in html:
+            return result
+        hdr = _parse_header_bs4(html)
+        result.update(hdr)
+        result.update(_parse_markets_bs4(html, market_keys=market_keys))
+    except Exception as e:
+        pass
+    return result
 
 # ── Excel export ──────────────────────────────────────────────────────────────
 KEYS = [
@@ -1023,9 +1056,10 @@ def run_scraper(start: dt.date, end: dt.date, output_path: str,
                 cur += dt.timedelta(days=1)
                 continue
 
-            # Paralel detay cekme
+            # Paralel detay cekme (HTTP)
             done_count = 0
             day_matches = 0
+            http_failed = []
             with ThreadPoolExecutor(max_workers=5) as pool:
                 futures = {
                     pool.submit(scrape_match_fast, s, match_date=cur): s
@@ -1035,12 +1069,50 @@ def run_scraper(start: dt.date, end: dt.date, output_path: str,
                     try:
                         r = fut.result()
                         done_count += 1
-                        if _row_is_valid(r):
+                        if r.pop('_http_failed', False):
+                            http_failed.append(r)
+                        elif _row_is_valid(r):
                             rows.append(r)
                             total += 1
                             day_matches += 1
                     except Exception:
                         done_count += 1
+
+            # HTTP basarisiz olanlari Selenium ile tek tek cek
+            if http_failed:
+                # Ilk macta Selenium dene, o da basarisizsa geri kalan butun
+                # maclarda da iddaa tab disabled demektir, hepsini atla
+                first = http_failed[0]
+                d = _ensure_driver()
+                url0 = first.get('iddaa_link', '')
+                sel0 = scrape_match_selenium(d, url0) if url0 else {}
+                if sel0 and any(sel0.get(k) for k in ('ms1','ms0','ms2')):
+                    # Selenium calisiyor, geri kalanlari da cek
+                    first.update(sel0)
+                    if _row_is_valid(first):
+                        rows.append(first)
+                        total += 1
+                        day_matches += 1
+                    print(f'  [{cur:%d.%m.%Y}] {len(http_failed)} mac Selenium fallback...', flush=True)
+                    for r in http_failed[1:]:
+                        url = r.get('iddaa_link', '')
+                        if not url:
+                            continue
+                        sel_data = scrape_match_selenium(d, url)
+                        if sel_data:
+                            r.update(sel_data)
+                        if _row_is_valid(r):
+                            rows.append(r)
+                            total += 1
+                            day_matches += 1
+                    # Ana sayfaya geri don
+                    try:
+                        pick_date(d, cur)
+                        time.sleep(0.3)
+                    except Exception:
+                        pass
+                else:
+                    print(f'  [{cur:%d.%m.%Y}] {len(http_failed)} mac iddaa verisi yok (disabled)', flush=True)
 
             print(f'  -> {day_matches} gecerli mac (toplam: {total})', flush=True)
 
