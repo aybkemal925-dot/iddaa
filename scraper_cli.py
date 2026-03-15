@@ -698,6 +698,51 @@ def _parse_markets_bs4(html: str, market_keys: set | None = None) -> dict:
             elif ('handikap' in first or 'hnd' in first) and ('-1' in first or '0:1' in first) and wants('hnd_1','hnd_x','hnd_2'):
                 mp = _bs4_opt_map(item)
                 result['hnd_1']=mp.get('1',''); result['hnd_x']=mp.get('x',''); result['hnd_2']=mp.get('2','')
+            # ── 2. Handikap ──
+            elif ('handikap' in first or 'hnd' in first) and ('0:2' in first or '-2' in first) and wants('hnd2_1','hnd2_x','hnd2_2'):
+                mp = _bs4_opt_map(item)
+                result['hnd2_1']=mp.get('1',''); result['hnd2_x']=mp.get('x',''); result['hnd2_2']=mp.get('2','')
+            # ── IY Alt/Üst ──
+            elif ('ilk yari' in first or '1. yari' in first) and ('alt' in first or 'ust' in first) and wants('iy_au_05_alt','iy_au_05_ust','iy_au_15_alt','iy_au_15_ust'):
+                for th,key in [('0.5','05'),('1.5','15')]:
+                    if th in first:
+                        mp = _bs4_opt_map(item)
+                        for k,v in mp.items():
+                            if 'alt' in k: result[f'iy_au_{key}_alt']=v
+                            elif 'ust' in k: result[f'iy_au_{key}_ust']=v
+                        break
+            # ── IY/MS ──
+            elif ('ilk yari' in first or '1. yari' in first) and ('mac sonucu' in first or 'iy/ms' in first or 'iy ms' in first) and wants('iy_ms_1_1','iy_ms_1_x','iy_ms_1_2','iy_ms_x_1','iy_ms_x_x','iy_ms_x_2','iy_ms_2_1','iy_ms_2_x','iy_ms_2_2'):
+                combos = {'1/1':'iy_ms_1_1','1/x':'iy_ms_1_x','1/2':'iy_ms_1_2',
+                           'x/1':'iy_ms_x_1','x/x':'iy_ms_x_x','x/2':'iy_ms_x_2',
+                           '2/1':'iy_ms_2_1','2/x':'iy_ms_2_x','2/2':'iy_ms_2_2'}
+                mp = _bs4_opt_map(item)
+                for k,v in mp.items():
+                    kn = k.replace(' ','').replace('-','/')
+                    if kn in combos: result[combos[kn]]=v
+            # ── Toplam Gol ──
+            elif 'toplam gol' in first and ('0-1' in first or '2-3' in first or raw.count('|')>=3) and wants('tg_0_1','tg_2_3','tg_4_5','tg_6p'):
+                mp = _bs4_opt_map(item)
+                for k,v in mp.items():
+                    kk = k.replace(' ','')
+                    if '0-1' in kk: result['tg_0_1']=v
+                    elif '2-3' in kk: result['tg_2_3']=v
+                    elif '4-5' in kk: result['tg_4_5']=v
+                    elif '6' in kk: result['tg_6p']=v
+            # ── Ev Sahibi Toplam Gol ──
+            elif ('ev sahibi' in first or 'takim 1' in first) and ('1.5' in first or '2.5' in first) and wants('t1_1_5_ust','t1_2_5_ust'):
+                mp = _bs4_opt_map(item)
+                for k,v in mp.items():
+                    if 'ust' in k:
+                        if '1.5' in first: result['t1_1_5_ust']=v
+                        elif '2.5' in first: result['t1_2_5_ust']=v
+            # ── Deplasman Toplam Gol ──
+            elif ('deplasman' in first or 'konuk' in first or 'takim 2' in first) and ('1.5' in first or '2.5' in first) and wants('t2_1_5_ust','t2_2_5_ust'):
+                mp = _bs4_opt_map(item)
+                for k,v in mp.items():
+                    if 'ust' in k:
+                        if '1.5' in first: result['t2_1_5_ust']=v
+                        elif '2.5' in first: result['t2_2_5_ust']=v
         except Exception:
             continue
     return result
