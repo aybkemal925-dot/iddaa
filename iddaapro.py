@@ -787,10 +787,88 @@ _LEAGUE_NAME_ALIASES: dict[str, str] = {
 # Sponsor/dönemsel kelimeler — lig karşılaştırmasında görmezden gelinir
 # "Trendyol Süper Lig" ve "Süper Lig" aynı lig olarak eşleşmeli
 _SPONSOR_WORDS = {'trendyol', 'spor', 'toto', 'stsl', 'misli', 'bilyoner',
-                  'cemil', 'usta', 'turkcell', 'digiturk', 'bein'}
+                  'cemil', 'usta', 'turkcell', 'digiturk', 'bein',
+                  'ptt', 'tff', 'nesine', 'bank', 'asya', 'sigorta',
+                  # Ek sponsor / isim degisikligi kelimeleri (2020-2026)
+                  'vodafone', 'ziraat', 'thy', 'betsson', 'macron',
+                  'parions', 'uber', 'eats', 'ea', 'tim',
+                  'scotiabank', 'apertura', 'clausura',
+                  }
+
+_COUNTRY_TOP_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'turkiye': ('super lig',),
+    'ingiltere': ('premier lig',),
+    'ispanya': ('laliga', 'la liga', 'primera division'),
+    'italya': ('serie a',),
+    'almanya': ('bundesliga',),
+    'fransa': ('ligue 1',),
+    'hollanda': ('eredivisie',),
+    'portekiz': ('premier lig', 'primeira liga'),
+    'belcika': ('pro lig', 'first division a'),
+    'avusturya': ('bundesliga',),
+    'cek cumhuriyeti': ('czech liga', 'first liga'),
+    'danimarka': ('superliga',),
+    'finlandiya': ('veikkausliiga',),
+    'hirvatistan': ('1 hnl',),
+    'iskocya': ('premiership',),
+    'isvec': ('allsvenskan',),
+    'isvicre': ('super lig', 'super league'),
+    'macaristan': ('nb i',),
+    'norvec': ('eliteserien',),
+    'polonya': ('ekstraklasa',),
+    'romanya': ('liga 1', 'liga i'),
+    'rusya': ('premier lig',),
+    'sirbistan': ('super lig',),
+    'yunanistan': ('super lig',),
+    'abd': ('mls', 'major league soccer'),
+    'brezilya': ('serie a', 'brasileirao'),
+    'japonya': ('j1 ligi', 'j1 lig'),
+    'guney kore': ('k lig 1',),
+    'cin': ('super lig',),
+    'avustralya': ('a lig', 'aleague'),
+}
+
+_COUNTRY_SECOND_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'turkiye': ('1 lig',),
+    'ingiltere': ('championship',),
+    'ispanya': ('laliga 2', 'segunda division'),
+    'italya': ('serie b',),
+    'almanya': ('2 bundesliga',),
+    'fransa': ('ligue 2',),
+    'hollanda': ('eerste divisie',),
+    'portekiz': ('2 lig', 'segunda liga'),
+    'belcika': ('challenger pro lig', 'first division b'),
+    'avusturya': ('1 lig', 'erste liga'),
+    'danimarka': ('1 lig', '1 division'),
+    'finlandiya': ('ykkosliiga', 'ykkonen'),
+    'hirvatistan': ('2 hnl',),
+    'iskocya': ('championship',),
+    'isvicre': ('challenge lig', 'challenge league'),
+    'macaristan': ('nb ii', '2 lig'),
+    'norvec': ('1 lig', 'obos ligaen'),
+    'polonya': ('1 lig', 'i liga'),
+    'romanya': ('2 lig', 'liga 2', 'liga ii'),
+    'rusya': ('fnl', 'first league'),
+    'sirbistan': ('1 lig',),
+    'yunanistan': ('2 lig', 'super league 2'),
+}
+
+_COUNTRY_THIRD_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'fransa': ('ulusal lig 1', 'national 1'),
+    'ingiltere': ('league one', '1 lig', 'lig 1'),
+    'polonya': ('2 lig', 'ii liga'),
+    'iskocya': ('3 lig', 'league one'),
+    'isvec': ('3 lig',),
+}
+
+_COUNTRY_FOURTH_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'ingiltere': ('league two', '2 lig', 'lig 2'),
+    'iskocya': ('4 lig', 'league two'),
+}
 
 def _fold_lig(s: str) -> str:
-    """Lig adı/slug normalizer — nokta ve tire → boşluk, Türkçe → ASCII, İngilizce ülke → Türkçe."""
+    """Lig adı/slug normalizer — nokta ve tire → boşluk, Türkçe → ASCII, İngilizce ülke → Türkçe.
+    Sponsor kelimelerini de temizler (yildan yila degisen lig isimleri icin)."""
     r = _fold_text(s.replace(".", " ").replace("-", " "))
     # Ingilizce ulke adini Turkce karsiligina cevir
     for eng, tr in _COUNTRY_ALIASES.items():
@@ -802,7 +880,9 @@ def _fold_lig(s: str) -> str:
     # Lig adi varyasyonlarini normalize et (league→lig, liga→lig vb.)
     words = r.split()
     words = [_LEAGUE_NAME_ALIASES.get(w, w) for w in words]
-    return " ".join(words)
+    # Sponsor kelimelerini temizle (yildan yila degisen isimler icin)
+    words = [w for w in words if w not in _SPONSOR_WORDS]
+    return " ".join(words) if words else " ".join(r.split())
 
 def lig_key(country_display: str, league_display: str) -> str:
     """LEAGUE_LIST'teki bir giriş için filtre anahtarı üret."""
@@ -819,6 +899,33 @@ def _split_known_lig_key(value: str) -> tuple[str, str]:
         if value.startswith(prefix):
             return ckey, value[len(prefix):].strip()
     return "", value
+
+def _league_tier(country_key: str, league_text: str) -> int | None:
+    league_norm = _fold_lig(league_text)
+    league_core = " ".join(w for w in league_norm.split() if w not in _SPONSOR_WORDS)
+
+    def has_any(*phrases: str) -> bool:
+        return any(p in league_core for p in phrases)
+
+    if has_any(*_COUNTRY_FOURTH_TIER_HINTS.get(country_key, ())):
+        return 4
+    if has_any(*_COUNTRY_THIRD_TIER_HINTS.get(country_key, ())):
+        return 3
+    if has_any(*_COUNTRY_SECOND_TIER_HINTS.get(country_key, ())):
+        return 2
+    if has_any(*_COUNTRY_TOP_TIER_HINTS.get(country_key, ())):
+        return 1
+
+    numeric_patterns = [
+        (r'\b4\s*(?:lig|liga|division|divisie|hnl)\b', 4),
+        (r'\b3\s*(?:lig|liga|division|divisie|hnl)\b', 3),
+        (r'\b2\s*(?:lig|liga|division|divisie|bundesliga|hnl)\b', 2),
+        (r'\b1\s*(?:lig|liga|division|divisie|hnl)\b', 1),
+    ]
+    for pattern, tier in numeric_patterns:
+        if re.search(pattern, league_core):
+            return tier
+    return None
 
 def _lig_components_match(found_key: str, selected_key: str) -> bool:
     found_country, found_league = _split_known_lig_key(found_key)
@@ -837,25 +944,13 @@ def _lig_components_match(found_key: str, selected_key: str) -> bool:
     # Ayni ulke — lig karsilastir
     if not found_league or not sel_league:
         return found_country == sel_country
-    # Kelime kümesi karşılaştırması: slug sırası farklı olsa da eşleşsin
-    found_words = set(found_league.split())
-    sel_words   = set(sel_league.split())
-    # Sponsor kelimelerini çıkar (Trendyol, Spor Toto vb.)
-    found_core = found_words - _SPONSOR_WORDS
-    sel_core   = sel_words - _SPONSOR_WORDS
-    if (found_words == sel_words
-        or found_core == sel_core
-        or found_league == sel_league
-        or found_league.endswith(" " + sel_league)
-        or sel_league.endswith(" " + found_league)):
-        return True
-    # Kısmi eşleşme: bir küme diğerini içeriyorsa (premier lig ⊂ premier league)
-    if found_words <= sel_words or sel_words <= found_words:
-        return True
-    # Sponsor çıkarılmış haliyle kısmi eşleşme
-    if found_core and sel_core and (found_core <= sel_core or sel_core <= found_core):
-        return True
-    return False
+    found_tier = _league_tier(found_country, found_league)
+    sel_tier = _league_tier(sel_country, sel_league)
+    # Esas kural: ayarlarda seçilen lig, aynı ülkedeki aynı seviye ile eşleşir.
+    if found_tier is not None and sel_tier is not None:
+        return found_tier == sel_tier
+    # Seviye çözülemediyse sadece birebir normalize isim eşleşmesi kabul edilir.
+    return found_league == sel_league
 
 def lig_filtreli(iddaa_link: str, sel_leagues: set[str] | None) -> bool:
     """URL'den ülke+lig key'i çıkar, seçili liglerdeyse True döndür."""
@@ -1574,7 +1669,7 @@ HEADERS = [
 
 # ── Lig listesi (country_display, [league_displays]) ─────────────────────────
 LEAGUE_LIST: list[tuple[str, list[str]]] = [
-    ("T\u00dcRK\u0130YE",      ["Trendyol S\u00fcper Lig", "Trendyol 1. Lig"]),
+    ("T\u00dcRK\u0130YE",      ["S\u00fcper Lig", "1. Lig"]),
     ("\u0130NG\u0130LTERE",     ["Premier Lig", "Championship", "1. Lig", "2. Lig"]),
     ("\u0130SPANYA",            ["LaLiga", "LaLiga 2"]),
     ("\u0130TALYA",             ["Serie A", "Serie B"]),
@@ -2247,64 +2342,70 @@ class IddaaProApp:
         self._progress.start(10)
 
     def _scrape_gunluk_worker(self):
-        today = dt.date.today()
-        print(f'G\u00fcnl\u00fck ma\u00e7lar \u00e7ekiliyor: {today:%d.%m.%Y}')
-        self._set_status('Taray\u0131c\u0131 a\u00e7\u0131l\u0131yor...')
+        start = self._start_cal.get_date()
+        end = self._end_cal.get_date()
+        total_days = (end - start).days + 1
+        print(f'Günlük maçlar çekiliyor: {start:%d.%m.%Y} - {end:%d.%m.%Y} ({total_days} gün)')
+        self._set_status('Tarayıcı açılıyor...')
         try:
             driver = build_driver(headless=True)
             self._driver = driver
         except Exception as e:
-            self._set_status(f'Driver hatas\u0131: {e}')
+            self._set_status(f'Driver hatası: {e}')
             self._progress.stop()
             return
 
         total = 0
         try:
-            self._set_status('Ana sayfa y\u00fckleniyor...')
+            self._set_status('Ana sayfa yükleniyor...')
             open_main_page(driver)
             _init_session_cookies(driver)
 
-            # Tumunu Sec = None → tanimli ligleri kullan
             lig_filtre = self._sel_leagues if self._sel_leagues is not None else _get_all_league_keys()
             mkt_filtre = self._sel_markets
 
-            self._set_status(f'Bug\u00fcn: {today:%d.%m.%Y} - ma\u00e7lar toplan\u0131yor...')
-            pick_date(driver, today)
-            wait_rows(driver, timeout=5)
-            close_popups(driver)
-            time.sleep(0.15)
+            for day_idx in range(total_days):
+                if self._stop_flag.is_set():
+                    break
+                current_date = start + dt.timedelta(days=day_idx)
 
-            summaries = collect_summaries(driver)
-            print(f'  [{today:%d.%m.%Y}] {len(summaries)} ma\u00e7 bulundu', flush=True)
+                self._set_status(f'[{day_idx+1}/{total_days}] {current_date:%d.%m.%Y} - maçlar toplanıyor...')
+                pick_date(driver, current_date)
+                wait_rows(driver, timeout=5)
+                close_popups(driver)
+                time.sleep(0.15)
 
-            # Lig filtreleme (detay cekmeden ONCE — tanimsiz ligler atlanir)
-            onceki = len(summaries)
-            filtered = []
-            no_lig_count = 0
-            for s in summaries:
-                lk = (s.get('lig_key') or '').strip()
-                if lk:
-                    if lig_filtreli_key(lk, lig_filtre):
-                        filtered.append(s)
-                else:
-                    if lig_filtreli(s.get('iddaa_link', ''), lig_filtre):
-                        filtered.append(s)
+                summaries = collect_summaries(driver)
+                print(f'  [{current_date:%d.%m.%Y}] {len(summaries)} maç bulundu', flush=True)
+
+                onceki = len(summaries)
+                filtered = []
+                no_lig_count = 0
+                for s in summaries:
+                    lk = (s.get('lig_key') or '').strip()
+                    if lk:
+                        if lig_filtreli_key(lk, lig_filtre):
+                            filtered.append(s)
                     else:
-                        no_lig_count += 1
-            summaries = filtered
-            atlanan = onceki - len(summaries)
-            if no_lig_count:
-                print(f'  [{today:%d.%m.%Y}] {no_lig_count} maçta lig bilgisi yok, atlandı', flush=True)
-            print(f'  [{today:%d.%m.%Y}] Lig filtresi: {onceki} → {len(summaries)} maç ({atlanan} atlandı)', flush=True)
-            self._set_status(f'{today:%d.%m.%Y} - {len(summaries)} maç (seçili liglerden) | {atlanan} atlandı')
+                        if lig_filtreli(s.get('iddaa_link', ''), lig_filtre):
+                            filtered.append(s)
+                        else:
+                            no_lig_count += 1
+                summaries = filtered
+                atlanan = onceki - len(summaries)
+                if no_lig_count:
+                    print(f'  [{current_date:%d.%m.%Y}] {no_lig_count} maçta lig bilgisi yok, atlandı', flush=True)
+                print(f'  [{current_date:%d.%m.%Y}] Lig filtresi: {onceki} → {len(summaries)} maç ({atlanan} atlandı)', flush=True)
+                self._set_status(f'[{day_idx+1}/{total_days}] {current_date:%d.%m.%Y} - {len(summaries)} maç | {atlanan} atlandı')
 
-            if summaries:
-                # Paralel HTTP ile detay cek (hizli)
-                self._set_status(f'{len(summaries)} mac detayi cekiliyor (paralel)...')
+                if not summaries:
+                    continue
+
+                self._set_status(f'[{day_idx+1}/{total_days}] {current_date:%d.%m.%Y} - {len(summaries)} mac detayı çekiliyor...')
                 retry_selenium = []
                 with ThreadPoolExecutor(max_workers=5) as pool:
                     futures = {
-                        pool.submit(scrape_match_fast, s, match_date=today, market_keys=mkt_filtre): s
+                        pool.submit(scrape_match_fast, s, match_date=current_date, market_keys=mkt_filtre): s
                         for s in summaries
                     }
                     for fut in as_completed(futures):
@@ -2312,8 +2413,6 @@ class IddaaProApp:
                             break
                         try:
                             r = fut.result()
-                            # Lig filtresi onceden uygulandi, tekrar kontrol gereksiz
-                            # Oran verisi bos mu kontrol — bossa Selenium'a birak
                             has_odds = any(r.get(k) for k in ('ms1','ms0','ms2','au_2_5_alt','au_2_5_ust','kg_var'))
                             if not has_odds:
                                 retry_selenium.append(futures[fut])
@@ -2324,17 +2423,16 @@ class IddaaProApp:
                             total += 1
                             self.root.after(0, self._add_row, r)
                             self.root.after(0, self._count_var.set, f'Maclar ({total})')
-                            self._set_status(f'[{total}/{len(summaries)}] {r.get("ev_sahibi","")} - {r.get("konuk_ekip","")}')
+                            self._set_status(f'[{day_idx+1}/{total_days}] [{total}] {r.get("ev_sahibi","")} - {r.get("konuk_ekip","")}')
                         except Exception as ex:
                             print(f'    HATA: {ex}')
 
-                # HTTP ile oran alinamayanlar icin: HTTP retry sonra Selenium
                 if retry_selenium and not self._stop_flag.is_set():
                     still_missing = []
-                    self._set_status(f'{len(retry_selenium)} mac HTTP retry...')
+                    self._set_status(f'[{day_idx+1}/{total_days}] {len(retry_selenium)} mac HTTP retry...')
                     with ThreadPoolExecutor(max_workers=5) as retry_pool:
                         retry_futures = {
-                            retry_pool.submit(scrape_match_fast, s, match_date=today, market_keys=mkt_filtre): s
+                            retry_pool.submit(scrape_match_fast, s, match_date=current_date, market_keys=mkt_filtre): s
                             for s in retry_selenium
                         }
                         for fut in as_completed(retry_futures):
@@ -2360,7 +2458,7 @@ class IddaaProApp:
                             label = f"{s['ev_sahibi']} - {s['konuk_ekip']}"
                             self._set_status(f'[Selenium {idx_s}/{len(still_missing)}] {label}')
                             try:
-                                r = scrape_match(driver, s, self._stop_flag, match_date=today, market_keys=mkt_filtre)
+                                r = scrape_match(driver, s, self._stop_flag, match_date=current_date, market_keys=mkt_filtre)
                                 if self._stop_flag.is_set():
                                     break
                                 if not _row_is_valid(r):
@@ -2381,9 +2479,9 @@ class IddaaProApp:
             self._driver = None
             self._progress.stop()
             if self._stop_flag.is_set():
-                self._set_status(f"Iptal edildi - {total} mac", total)
+                self._set_status(f"İptal edildi - {total} mac", total)
             else:
-                self._set_status(f"Gunluk tamamlandi - {total} mac", total)
+                self._set_status(f"Tamamlandı - {total} mac ({total_days} gün)", total)
 
     def _scrape_worker(self, start: dt.date, end: dt.date):
         print(f'Scraper başladı: {start:%d.%m.%Y} - {end:%d.%m.%Y}')
@@ -2420,52 +2518,36 @@ class IddaaProApp:
             return driver
 
         def _collect_day(cur_date):
-            """Bir gun icin API-first + Selenium fallback ile mac listesi topla."""
+            """Bir gun icin Selenium ile mac listesi topla."""
             nonlocal driver
             summaries = []
 
-            # 1) API ile dene (hızlı, Selenium gerektirmez)
-            api_ok = False
-            try:
-                if not _SESSION_READY:
-                    _SESSION.get("https://www.mackolik.com", timeout=8)
-                api_summaries = fetch_matches_api(cur_date, lig_filtre=lig_filtre)
-                if api_summaries:
-                    summaries = api_summaries
-                    api_ok = True
-                    print(f'  [{cur_date:%d.%m.%Y}] {len(summaries)} maç bulundu (API)', flush=True)
-            except Exception as e:
-                print(f'  [{cur_date:%d.%m.%Y}] API hatası: {e}', flush=True)
+            selenium_ok = False
+            for retry in range(2):
+                try:
+                    driver = _ensure_driver()
+                    pick_date(driver, cur_date)
+                    wait_rows(driver, timeout=5)
+                    close_popups(driver)
+                    time.sleep(0.15)
+                    summaries = collect_summaries(driver)
+                    selenium_ok = True
+                    break
+                except Exception as e:
+                    print(f'  [{cur_date:%d.%m.%Y}] Selenium deneme {retry+1} hata: {e}', flush=True)
+                    if retry == 0:
+                        try:
+                            with contextlib.suppress(Exception):
+                                driver.quit()
+                            driver = build_driver(headless=True)
+                            self._driver = driver
+                            open_main_page(driver)
+                            _init_session_cookies(driver)
+                        except Exception as e2:
+                            print(f'  [{cur_date:%d.%m.%Y}] Driver yeniden baslatma hatasi: {e2}', flush=True)
 
-            # 2) API başarısız veya boş dönerse Selenium ile dene
-            if not api_ok:
-                selenium_ok = False
-                for retry in range(2):
-                    try:
-                        driver = _ensure_driver()
-                        pick_date(driver, cur_date)
-                        wait_rows(driver, timeout=5)
-                        close_popups(driver)
-                        time.sleep(0.15)
-                        summaries = collect_summaries(driver)
-                        selenium_ok = True
-                        break
-                    except Exception as e:
-                        print(f'  [{cur_date:%d.%m.%Y}] Selenium deneme {retry+1} hata: {e}', flush=True)
-                        if retry == 0:
-                            try:
-                                with contextlib.suppress(Exception):
-                                    driver.quit()
-                                driver = build_driver(headless=True)
-                                self._driver = driver
-                                open_main_page(driver)
-                                _init_session_cookies(driver)
-                            except Exception as e2:
-                                print(f'  [{cur_date:%d.%m.%Y}] Driver yeniden baslatma hatasi: {e2}', flush=True)
-
-                if selenium_ok:
-                    print(f'  [{cur_date:%d.%m.%Y}] {len(summaries)} maç bulundu (Selenium)', flush=True)
-            # API başarılıysa Selenium kontrolü gereksiz — API kapsamlı veri dönüyor
+            if selenium_ok:
+                print(f'  [{cur_date:%d.%m.%Y}] {len(summaries)} maç bulundu', flush=True)
 
             return summaries
 

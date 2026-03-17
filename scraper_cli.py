@@ -97,7 +97,84 @@ _BANNED_KEYWORDS = {'women', 'u23', 'u21', 'u19', 'u18', 'u17', 'reserve',
                     'friendly', 'arkadas'}
 
 _SPONSOR_WORDS = {'trendyol', 'spor', 'toto', 'stsl', 'misli', 'bilyoner',
-                  'cemil', 'usta', 'turkcell', 'digiturk', 'bein'}
+                  'cemil', 'usta', 'turkcell', 'digiturk', 'bein',
+                  'ptt', 'tff', 'nesine', 'bank', 'asya', 'sigorta',
+                  # Ek sponsor / isim degisikligi kelimeleri (2020-2026)
+                  'vodafone', 'ziraat', 'thy', 'betsson', 'macron',
+                  'parions', 'uber', 'eats', 'ea', 'tim',
+                  'scotiabank', 'apertura', 'clausura',
+                  }
+
+_COUNTRY_TOP_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'turkiye': ('super lig',),
+    'ingiltere': ('premier lig',),
+    'ispanya': ('laliga', 'la liga', 'primera division'),
+    'italya': ('serie a',),
+    'almanya': ('bundesliga',),
+    'fransa': ('ligue 1',),
+    'hollanda': ('eredivisie',),
+    'portekiz': ('premier lig', 'primeira liga'),
+    'belcika': ('pro lig', 'first division a'),
+    'avusturya': ('bundesliga',),
+    'cek cumhuriyeti': ('czech liga', 'first liga'),
+    'danimarka': ('superliga',),
+    'finlandiya': ('veikkausliiga',),
+    'hirvatistan': ('1 hnl',),
+    'iskocya': ('premiership',),
+    'isvec': ('allsvenskan',),
+    'isvicre': ('super lig', 'super league'),
+    'macaristan': ('nb i',),
+    'norvec': ('eliteserien',),
+    'polonya': ('ekstraklasa',),
+    'romanya': ('liga 1', 'liga i'),
+    'rusya': ('premier lig',),
+    'sirbistan': ('super lig',),
+    'yunanistan': ('super lig',),
+    'abd': ('mls', 'major league soccer'),
+    'brezilya': ('serie a', 'brasileirao'),
+    'japonya': ('j1 ligi', 'j1 lig'),
+    'guney kore': ('k lig 1',),
+    'cin': ('super lig',),
+    'avustralya': ('a lig', 'aleague'),
+}
+
+_COUNTRY_SECOND_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'turkiye': ('1 lig',),
+    'ingiltere': ('championship',),
+    'ispanya': ('laliga 2', 'segunda division'),
+    'italya': ('serie b',),
+    'almanya': ('2 bundesliga',),
+    'fransa': ('ligue 2',),
+    'hollanda': ('eerste divisie',),
+    'portekiz': ('2 lig', 'segunda liga'),
+    'belcika': ('challenger pro lig', 'first division b'),
+    'avusturya': ('1 lig', 'erste liga'),
+    'danimarka': ('1 lig', '1 division'),
+    'finlandiya': ('ykkosliiga', 'ykkonen'),
+    'hirvatistan': ('2 hnl',),
+    'iskocya': ('championship',),
+    'isvicre': ('challenge lig', 'challenge league'),
+    'macaristan': ('nb ii', '2 lig'),
+    'norvec': ('1 lig', 'obos ligaen'),
+    'polonya': ('1 lig', 'i liga'),
+    'romanya': ('2 lig', 'liga 2', 'liga ii'),
+    'rusya': ('fnl', 'first league'),
+    'sirbistan': ('1 lig',),
+    'yunanistan': ('2 lig', 'super league 2'),
+}
+
+_COUNTRY_THIRD_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'fransa': ('ulusal lig 1', 'national 1'),
+    'ingiltere': ('league one', '1 lig', 'lig 1'),
+    'polonya': ('2 lig', 'ii liga'),
+    'iskocya': ('3 lig', 'league one'),
+    'isvec': ('3 lig',),
+}
+
+_COUNTRY_FOURTH_TIER_HINTS: dict[str, tuple[str, ...]] = {
+    'ingiltere': ('league two', '2 lig', 'lig 2'),
+    'iskocya': ('4 lig', 'league two'),
+}
 
 _API_COUNTRY_TO_LEAGUE_LIST: dict[str, str] = {
     "turkey": "TÜRKİYE", "türkiye": "TÜRKİYE", "turkiye": "TÜRKİYE",
@@ -194,6 +271,10 @@ _COUNTRY_ALIASES = {
 _LIG_ALIASES = {
     'league': 'lig', 'liga': 'lig', 'ligue': 'lig',
     'division': 'lig', 'divisie': 'lig',
+    'primera': '1', 'segunda': '2',
+    'first': '1', 'second': '2',
+    'one': '1', 'two': '2', 'three': '3', 'four': '4',
+    'national': 'ulusal',
 }
 
 def _fold_lig(s: str) -> str:
@@ -204,12 +285,17 @@ def _fold_lig(s: str) -> str:
         if r.startswith(eng + " "):
             r = tr + r[len(eng):]
             break
-    for eng, tr in _LIG_ALIASES.items():
-        r = r.replace(eng, tr)
-    return " ".join(r.split())
+    # Kelime bazinda alias ve sponsor temizligi (substring replace yerine)
+    words = r.split()
+    cleaned = []
+    for w in words:
+        w = _LIG_ALIASES.get(w, w)   # tam kelime eslesirse alias uygula
+        if w not in _SPONSOR_WORDS:   # sponsor kelimesi degilse tut
+            cleaned.append(w)
+    return " ".join(cleaned) if cleaned else r
 
 LEAGUE_LIST: list[tuple[str, list[str]]] = [
-    ("TÜRKİYE",      ["Trendyol Süper Lig", "Trendyol 1. Lig"]),
+    ("TÜRKİYE",      ["Süper Lig", "1. Lig"]),
     ("İNGİLTERE",     ["Premier Lig", "Championship", "1. Lig", "2. Lig"]),
     ("İSPANYA",       ["LaLiga", "LaLiga 2"]),
     ("İTALYA",        ["Serie A", "Serie B"]),
@@ -262,6 +348,33 @@ def _split_known_lig_key(value: str) -> tuple[str, str]:
             return ckey, value[len(prefix):].strip()
     return "", value
 
+def _league_tier(country_key: str, league_text: str) -> int | None:
+    league_norm = _fold_lig(league_text)
+    league_core = " ".join(w for w in league_norm.split() if w not in _SPONSOR_WORDS)
+
+    def has_any(*phrases: str) -> bool:
+        return any(p in league_core for p in phrases)
+
+    if has_any(*_COUNTRY_FOURTH_TIER_HINTS.get(country_key, ())):
+        return 4
+    if has_any(*_COUNTRY_THIRD_TIER_HINTS.get(country_key, ())):
+        return 3
+    if has_any(*_COUNTRY_SECOND_TIER_HINTS.get(country_key, ())):
+        return 2
+    if has_any(*_COUNTRY_TOP_TIER_HINTS.get(country_key, ())):
+        return 1
+
+    numeric_patterns = [
+        (r'\b4\s*(?:lig|liga|division|divisie|hnl)\b', 4),
+        (r'\b3\s*(?:lig|liga|division|divisie|hnl)\b', 3),
+        (r'\b2\s*(?:lig|liga|division|divisie|bundesliga|hnl)\b', 2),
+        (r'\b1\s*(?:lig|liga|division|divisie|hnl)\b', 1),
+    ]
+    for pattern, tier in numeric_patterns:
+        if re.search(pattern, league_core):
+            return tier
+    return None
+
 def _lig_components_match(found_key: str, selected_key: str) -> bool:
     found_country, found_league = _split_known_lig_key(found_key)
     sel_country, sel_league = _split_known_lig_key(selected_key)
@@ -271,11 +384,11 @@ def _lig_components_match(found_key: str, selected_key: str) -> bool:
         return False
     if not found_league or not sel_league:
         return found_country == sel_country
-    f_words = set(found_league.split()) - _SPONSOR_WORDS
-    s_words = set(sel_league.split()) - _SPONSOR_WORDS
-    if not f_words or not s_words:
-        return found_country == sel_country
-    return f_words == s_words or f_words.issubset(s_words) or s_words.issubset(f_words)
+    found_tier = _league_tier(found_country, found_league)
+    sel_tier = _league_tier(sel_country, sel_league)
+    if found_tier is not None and sel_tier is not None:
+        return found_tier == sel_tier
+    return found_league == sel_league
 
 def lig_filtreli_key(lig_key_val: str, sel_leagues: set[str] | None) -> bool:
     if sel_leagues is None:
@@ -777,6 +890,7 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
     if match_date:
         row['mac_tarihi'] = match_date.strftime('%d.%m.%Y')
     label = summary.get('ev_sahibi', '')
+    row['_http_failed'] = False
 
     urls_to_try = [summary['iddaa_link']]
     overview = summary.get('overview_link', '')
@@ -789,7 +903,16 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
         for attempt in range(max_retries):
             try:
                 time.sleep(_throttle_delay)
-                resp = _SESSION.get(url, timeout=12, allow_redirects=True)
+                resp = _SESSION.get(url, timeout=12, allow_redirects=False)
+                # Redirect varsa /iddaa/ dusebilir, manual takip et
+                if resp.status_code in (301, 302, 303, 307, 308):
+                    loc = resp.headers.get('Location', '')
+                    if loc and '/iddaa/' not in loc and '/iddaa/' in url:
+                        # Redirect iddaa'yi kaldiriyor, bu URL oran vermez
+                        row['_http_failed'] = True
+                        return row
+                    resp = _SESSION.get(loc if loc.startswith('http') else f'https://www.mackolik.com{loc}',
+                                       timeout=12, allow_redirects=True)
                 if resp.status_code == 404:
                     break
                 if resp.status_code in (500, 502, 503, 429):
@@ -802,6 +925,10 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
                 resp.raise_for_status()
                 _throttle_ok()
                 html = resp.text
+                # Iddaa widget yoksa bu sayfa oran vermiyor
+                if 'widget-iddaa-markets' not in html:
+                    row['_http_failed'] = True
+                    return row
                 hdr = _parse_header_bs4(html)
                 if not row.get('mac_tarihi') and hdr.get('mac_tarihi'):
                     row['mac_tarihi'] = hdr['mac_tarihi']
@@ -817,7 +944,26 @@ def scrape_match_fast(summary: dict, match_date=None, market_keys=None,
                     time.sleep((attempt + 1) * 1)
                 else:
                     pass
+    row['_http_failed'] = True
     return row
+
+
+def scrape_match_selenium(driver, url: str, market_keys=None) -> dict:
+    """Selenium ile mac detay sayfasina gidip oranlari cek."""
+    result = {}
+    try:
+        driver.get(url)
+        time.sleep(2)
+        # Iddaa tab disabled mi kontrol et
+        html = driver.page_source
+        if 'widget-iddaa-markets' not in html:
+            return result
+        hdr = _parse_header_bs4(html)
+        result.update(hdr)
+        result.update(_parse_markets_bs4(html, market_keys=market_keys))
+    except Exception as e:
+        pass
+    return result
 
 # ── Excel export ──────────────────────────────────────────────────────────────
 KEYS = [
@@ -1023,9 +1169,10 @@ def run_scraper(start: dt.date, end: dt.date, output_path: str,
                 cur += dt.timedelta(days=1)
                 continue
 
-            # Paralel detay cekme
+            # Paralel detay cekme (HTTP)
             done_count = 0
             day_matches = 0
+            http_failed = []
             with ThreadPoolExecutor(max_workers=5) as pool:
                 futures = {
                     pool.submit(scrape_match_fast, s, match_date=cur): s
@@ -1035,12 +1182,50 @@ def run_scraper(start: dt.date, end: dt.date, output_path: str,
                     try:
                         r = fut.result()
                         done_count += 1
-                        if _row_is_valid(r):
+                        if r.pop('_http_failed', False):
+                            http_failed.append(r)
+                        elif _row_is_valid(r):
                             rows.append(r)
                             total += 1
                             day_matches += 1
                     except Exception:
                         done_count += 1
+
+            # HTTP basarisiz olanlari Selenium ile tek tek cek
+            if http_failed:
+                # Ilk macta Selenium dene, o da basarisizsa geri kalan butun
+                # maclarda da iddaa tab disabled demektir, hepsini atla
+                first = http_failed[0]
+                d = _ensure_driver()
+                url0 = first.get('iddaa_link', '')
+                sel0 = scrape_match_selenium(d, url0) if url0 else {}
+                if sel0 and any(sel0.get(k) for k in ('ms1','ms0','ms2')):
+                    # Selenium calisiyor, geri kalanlari da cek
+                    first.update(sel0)
+                    if _row_is_valid(first):
+                        rows.append(first)
+                        total += 1
+                        day_matches += 1
+                    print(f'  [{cur:%d.%m.%Y}] {len(http_failed)} mac Selenium fallback...', flush=True)
+                    for r in http_failed[1:]:
+                        url = r.get('iddaa_link', '')
+                        if not url:
+                            continue
+                        sel_data = scrape_match_selenium(d, url)
+                        if sel_data:
+                            r.update(sel_data)
+                        if _row_is_valid(r):
+                            rows.append(r)
+                            total += 1
+                            day_matches += 1
+                    # Ana sayfaya geri don
+                    try:
+                        pick_date(d, cur)
+                        time.sleep(0.3)
+                    except Exception:
+                        pass
+                else:
+                    print(f'  [{cur:%d.%m.%Y}] {len(http_failed)} mac iddaa verisi yok (disabled)', flush=True)
 
             print(f'  -> {day_matches} gecerli mac (toplam: {total})', flush=True)
 
