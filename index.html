@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İddaaPro - Mackolik Oran Veri Çekici</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-dark: #0f1923;
+            --bg-card: #1a2736;
+            --bg-card-hover: #223344;
+            --accent: #00e676;
+            --accent2: #00bcd4;
+            --yellow: #ffc107;
+            --red: #ff5252;
+            --text: #e0e6ed;
+            --text-dim: #8899aa;
+            --border: #2a3a4a;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, #1a2736 0%, #0d2137 100%);
+            border-bottom: 2px solid var(--accent);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header__logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header__icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 800; color: #0f1923;
+        }
+        .header__title {
+            font-size: 24px; font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header__subtitle { font-size: 12px; color: var(--text-dim); }
+        .header__status {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--accent);
+        }
+        .header__dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ── Controls ── */
+        .controls {
+            padding: 20px 32px;
+            display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .control-group label {
+            font-size: 13px; color: var(--text-dim); font-weight: 500;
+        }
+        .control-input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .control-input:focus { border-color: var(--accent); }
+        .btn {
+            padding: 9px 22px;
+            border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn--primary {
+            background: linear-gradient(135deg, var(--accent), #00c853);
+            color: #0f1923;
+        }
+        .btn--primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,230,118,0.3); }
+        .btn--secondary {
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn--secondary:hover { border-color: var(--accent); }
+
+        /* ── Stats Bar ── */
+        .stats-bar {
+            padding: 0 32px 16px;
+            display: flex; gap: 16px; flex-wrap: wrap;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            flex: 1; min-width: 160px;
+        }
+        .stat-card__value {
+            font-size: 28px; font-weight: 700;
+        }
+        .stat-card__value--green { color: var(--accent); }
+        .stat-card__value--cyan { color: var(--accent2); }
+        .stat-card__value--yellow { color: var(--yellow); }
+        .stat-card__value--red { color: var(--red); }
+        .stat-card__label {
+            font-size: 12px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Progress ── */
+        .progress-section {
+            padding: 0 32px 20px;
+        }
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-card);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar__fill {
+            height: 100%;
+            width: 68%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        .progress-info {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: var(--text-dim); margin-top: 6px;
+        }
+
+        /* ── Main Layout ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 20px;
+            padding: 0 32px 32px;
+        }
+        @media (max-width: 900px) {
+            .main { grid-template-columns: 1fr; }
+        }
+
+        /* ── Match Table ── */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .panel__header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .panel__title {
+            font-size: 16px; font-weight: 600;
+        }
+        .panel__badge {
+            background: rgba(0,230,118,0.15);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+        }
+
+        .match-table { width: 100%; border-collapse: collapse; }
+        .match-table th {
+            text-align: left; padding: 10px 16px;
+            font-size: 11px; text-transform: uppercase;
+            color: var(--text-dim); letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.2);
+        }
+        .match-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(42,58,74,0.5);
+        }
+        .match-table tr:hover td { background: var(--bg-card-hover); }
+
+        .team-cell {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .team-home { font-weight: 600; }
+        .team-away { color: var(--text-dim); }
+        .score {
+            font-weight: 700; font-size: 14px;
+            text-align: center;
+        }
+        .score--ft { color: var(--accent); }
+        .score--ht { color: var(--text-dim); font-size: 11px; }
+        .league-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(0,188,212,0.12);
+            color: var(--accent2);
+            white-space: nowrap;
+        }
+
+        .odds-cell { display: flex; gap: 4px; }
+        .odd {
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px; font-weight: 600;
+            text-align: center; min-width: 42px;
+        }
+        .odd--1 { background: rgba(0,230,118,0.12); color: var(--accent); }
+        .odd--x { background: rgba(255,193,7,0.12); color: var(--yellow); }
+        .odd--2 { background: rgba(255,82,82,0.12); color: var(--red); }
+
+        /* ── Market Panel ── */
+        .market-list { padding: 8px; }
+        .market-item {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: background 0.15s;
+        }
+        .market-item:hover { background: var(--bg-card-hover); }
+        .market-item__name { font-size: 13px; }
+        .market-item__odds {
+            display: flex; gap: 6px;
+        }
+        .market-odd {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px; font-weight: 600;
+            background: rgba(0,230,118,0.08);
+            color: var(--accent);
+            border: 1px solid rgba(0,230,118,0.2);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .market-odd:hover {
+            background: rgba(0,230,118,0.2);
+            border-color: var(--accent);
+        }
+        .market-odd span { font-size: 10px; color: var(--text-dim); display: block; }
+
+        /* ── Log Panel ── */
+        .log-section {
+            padding: 0 32px 32px;
+        }
+        .log-box {
+            background: #0a1018;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            line-height: 1.8;
+        }
+        .log-line { display: flex; gap: 10px; }
+        .log-time { color: var(--text-dim); min-width: 70px; }
+        .log-ok { color: var(--accent); }
+        .log-warn { color: var(--yellow); }
+        .log-err { color: var(--red); }
+        .log-info { color: var(--accent2); }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--text-dim);
+            border-top: 1px solid var(--border);
+        }
+        .footer a { color: var(--accent2); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header__logo">
+        <div class="header__icon">iP</div>
+        <div>
+            <div class="header__title">iddaaPro</div>
+            <div class="header__subtitle">Mackolik MS Oran Veri Cekici</div>
+        </div>
+    </div>
+    <div class="header__status">
+        <div class="header__dot"></div>
+        Veri cekiliyor...
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+    <div class="control-group">
+        <label>Baslangic:</label>
+        <input type="date" class="control-input" value="2025-08-01">
+    </div>
+    <div class="control-group">
+        <label>Bitis:</label>
+        <input type="date" class="control-input" value="2026-03-21">
+    </div>
+    <div class="control-group">
+        <label>Lig:</label>
+        <select class="control-input">
+            <option>Tum Ligler</option>
+            <option>Trendyol Super Lig</option>
+            <option>Premier Lig</option>
+            <option>LaLiga</option>
+            <option>Serie A</option>
+            <option>Bundesliga</option>
+            <option>Ligue 1</option>
+        </select>
+    </div>
+    <button class="btn btn--primary" onclick="startScrape()">Veri Cek</button>
+    <button class="btn btn--secondary" onclick="exportExcel()">Excel'e Aktar</button>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-card__value stat-card__value--green">1,247</div>
+        <div class="stat-card__label">Toplam Mac</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__value stat-card__value--cyan">16,211</div>
+        <div class="stat-card__label">Oran Verisi</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__value stat-card__value--yellow">42</div>
+        <div class="stat-card__label">Lig</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__value stat-card__value--red">3</div>
+        <div class="stat-card__label">Hata</div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="progress-section">
+    <div class="progress-bar">
+        <div class="progress-bar__fill"></div>
+    </div>
+    <div class="progress-info">
+        <span>848 / 1,247 mac islendi</span>
+        <span>%68 tamamlandi - Tahmini sure: ~4 dk</span>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+    <!-- Match Table -->
+    <div class="panel">
+        <div class="panel__header">
+            <div class="panel__title">Mac Listesi</div>
+            <div class="panel__badge">Canli: 12 mac</div>
+        </div>
+        <table class="match-table">
+            <thead>
+                <tr>
+                    <th>Saat</th>
+                    <th>Lig</th>
+                    <th>Takimlar</th>
+                    <th>Skor</th>
+                    <th>IY</th>
+                    <th>MS Oranlar</th>
+                    <th>A/U 2.5</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>21:00</td>
+                    <td><span class="league-tag">Super Lig</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-home">Galatasaray</span>
+                            <span class="team-away">Fenerbahce</span>
+                        </div>
+                    </td>
+                    <td class="score score--ft">2 - 1</td>
+                    <td class="score score--ht">1-0</td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.65</span>
+                            <span class="odd odd--x">3.80</span>
+                            <span class="odd odd--2">5.20</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.58</span>
+                            <span class="odd odd--2">2.30</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>20:00</td>
+                    <td><span class="league-tag">Premier Lig</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-home">Arsenal</span>
+                            <span class="team-away">Liverpool</span>
+                        </div>
+                    </td>
+                    <td class="score score--ft">1 - 1</td>
+                    <td class="score score--ht">0-1</td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">2.10</span>
+                            <span class="odd odd--x">3.40</span>
+                            <span class="odd odd--2">3.50</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.72</span>
+                            <span class="odd odd--2">2.05</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>21:45</td>
+                    <td><span class="league-tag">LaLiga</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-home">Real Madrid</span>
+                            <span class="team-away">Barcelona</span>
+                        </div>
+                    </td>
+                    <td class="score score--ft">3 - 2</td>
+                    <td class="score score--ht">2-1</td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">2.30</span>
+                            <span class="odd odd--x">3.50</span>
+                            <span class="odd odd--2">3.10</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.45</span>
+                            <span class="odd odd--2">2.65</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>18:30</td>
+                    <td><span class="league-tag">Serie A</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-home">Inter</span>
+                            <span class="team-away">AC Milan</span>
+                        </div>
+                    </td>
+                    <td class="score score--ft">2 - 0</td>
+                    <td class="score score--ht">1-0</td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.80</span>
+                            <span class="odd odd--x">3.60</span>
+                            <span class="odd odd--2">4.50</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.62</span>
+                            <span class="odd odd--2">2.20</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>20:30</td>
+                    <td><span class="league-tag">Bundesliga</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-home">Bayern Munih</span>
+                            <span class="team-away">Dortmund</span>
+                        </div>
+                    </td>
+                    <td class="score score--ft">4 - 1</td>
+                    <td class="score score--ht">2-0</td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.45</span>
+                            <span class="odd odd--x">4.80</span>
+                            <span class="odd odd--2">6.50</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.38</span>
+                            <span class="odd odd--2">2.90</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>19:00</td>
+                    <td><span class="league-tag">Super Lig</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-home">Besiktas</span>
+                            <span class="team-away">Trabzonspor</span>
+                        </div>
+                    </td>
+                    <td class="score score--ft">1 - 0</td>
+                    <td class="score score--ht">0-0</td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.90</span>
+                            <span class="odd odd--x">3.30</span>
+                            <span class="odd odd--2">4.20</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="odds-cell">
+                            <span class="odd odd--1">1.75</span>
+                            <span class="odd odd--2">2.00</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Market Panel -->
+    <div class="panel">
+        <div class="panel__header">
+            <div class="panel__title">Detay Marketler</div>
+            <div class="panel__badge">Galatasaray - Fenerbahce</div>
+        </div>
+        <div class="market-list">
+            <div class="market-item">
+                <div class="market-item__name">Mac Sonucu</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>1</span>1.65</div>
+                    <div class="market-odd"><span>X</span>3.80</div>
+                    <div class="market-odd"><span>2</span>5.20</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Cifte Sans (1X)</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>1X</span>1.15</div>
+                    <div class="market-odd"><span>12</span>1.28</div>
+                    <div class="market-odd"><span>X2</span>2.15</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Ilk Yari Sonucu</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>1</span>2.10</div>
+                    <div class="market-odd"><span>X</span>2.30</div>
+                    <div class="market-odd"><span>2</span>4.50</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Alt/Ust 1.5</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>Alt</span>1.22</div>
+                    <div class="market-odd"><span>Ust</span>4.20</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Alt/Ust 2.5</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>Alt</span>1.58</div>
+                    <div class="market-odd"><span>Ust</span>2.30</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Alt/Ust 3.5</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>Alt</span>2.10</div>
+                    <div class="market-odd"><span>Ust</span>1.68</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Karsilikli Gol</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>Var</span>1.55</div>
+                    <div class="market-odd"><span>Yok</span>2.35</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Handikap (-1)</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>1</span>3.10</div>
+                    <div class="market-odd"><span>X</span>3.20</div>
+                    <div class="market-odd"><span>2</span>2.30</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">IY Alt/Ust 0.5</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>Alt</span>1.75</div>
+                    <div class="market-odd"><span>Ust</span>1.95</div>
+                </div>
+            </div>
+            <div class="market-item">
+                <div class="market-item__name">Toplam Gol</div>
+                <div class="market-item__odds">
+                    <div class="market-odd"><span>0-1</span>3.40</div>
+                    <div class="market-odd"><span>2-3</span>1.85</div>
+                    <div class="market-odd"><span>4+</span>3.10</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log -->
+<div class="log-section">
+    <div class="panel__header" style="padding: 12px 0 10px;">
+        <div class="panel__title">Islem Kayitlari</div>
+    </div>
+    <div class="log-box">
+        <div class="log-line"><span class="log-time">21:03:12</span> <span class="log-ok">[OK]</span> Selenium baslatildi - Firefox headless</div>
+        <div class="log-line"><span class="log-time">21:03:14</span> <span class="log-info">[INFO]</span> Mackolik.com yuklendi, cerezler alindi</div>
+        <div class="log-line"><span class="log-time">21:03:15</span> <span class="log-ok">[OK]</span> iddaa filtresi aktif - 42 lig taranacak</div>
+        <div class="log-line"><span class="log-time">21:03:16</span> <span class="log-info">[INFO]</span> 01.08.2025 tarihine gidiliyor...</div>
+        <div class="log-line"><span class="log-time">21:03:18</span> <span class="log-ok">[OK]</span> 01.08.2025 - 23 mac bulundu</div>
+        <div class="log-line"><span class="log-time">21:03:20</span> <span class="log-ok">[OK]</span> Galatasaray - Fenerbahce | 13 market cekildi</div>
+        <div class="log-line"><span class="log-time">21:03:21</span> <span class="log-ok">[OK]</span> Arsenal - Liverpool | 13 market cekildi</div>
+        <div class="log-line"><span class="log-time">21:03:22</span> <span class="log-warn">[WARN]</span> Real Madrid - Barcelona | MBS verisi bulunamadi, atlandı</div>
+        <div class="log-line"><span class="log-time">21:03:23</span> <span class="log-ok">[OK]</span> Inter - AC Milan | 13 market cekildi</div>
+        <div class="log-line"><span class="log-time">21:03:25</span> <span class="log-err">[ERR]</span> Sayfa yuklenemedi - yeniden deneniyor (1/3)</div>
+        <div class="log-line"><span class="log-time">21:03:28</span> <span class="log-ok">[OK]</span> Sayfa basariyla yuklendi</div>
+        <div class="log-line"><span class="log-time">21:03:30</span> <span class="log-info">[INFO]</span> 02.08.2025 tarihine geciliyor...</div>
+        <div class="log-line"><span class="log-time">21:03:32</span> <span class="log-ok">[OK]</span> 02.08.2025 - 31 mac bulundu</div>
+        <div class="log-line"><span class="log-time">21:04:15</span> <span class="log-info">[INFO]</span> 848 / 1,247 mac islendi (%68)</div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    iddaaPro v2.0 &mdash; Mackolik.com verilerinden iddaa oran analizi &mdash; <a href="#">Veri sadece analiz amaclıdır</a>
+</div>
+
+<script>
+    // Simple animation for progress bar
+    let progress = 68;
+    const fill = document.querySelector('.progress-bar__fill');
+
+    setInterval(() => {
+        if (progress < 100) {
+            progress += Math.random() * 0.5;
+            if (progress > 100) progress = 100;
+            fill.style.width = progress + '%';
+        }
+    }, 500);
+</script>
+
+</body>
+</html>
