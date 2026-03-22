@@ -88,13 +88,13 @@ def _init_session_cookies(driver):
 # ── API ───────────────────────────────────────────────────────────────────────
 _API_URL = "https://www.mackolik.com/perform/p0/ajax/components/competition/livescores/json?"
 
-_BANNED_KEYWORDS = {'women', 'u23', 'u21', 'u19', 'u18', 'u17', 'reserve',
-                    'youth', 'amateur', 'regional',
+_BANNED_KEYWORDS = {'women', 'u23', 'u21', 'u19', 'u18', 'u17', 'u20',
+                    'reserve', 'youth', 'amateur', 'regional',
                     'non lig', 'non-league', 'non league',
                     'national league south', 'national league north',
                     'isthmian', 'southern league', 'northern league',
-                    'a-lig kadin', 'a-league women',
-                    'friendly', 'arkadas'}
+                    'a-lig kadin', 'a-league women', 'kadin',
+                    'friendly', 'arkadas', 'hazirlik mac'}
 
 _SPONSOR_WORDS = {'trendyol', 'spor', 'toto', 'stsl', 'misli', 'bilyoner',
                   'cemil', 'usta', 'turkcell', 'digiturk', 'bein',
@@ -207,6 +207,10 @@ _API_COUNTRY_TO_LEAGUE_LIST: dict[str, str] = {
     "south korea": "GÜNEY KORE", "guney kore": "GÜNEY KORE",
     "china": "ÇİN", "cin": "ÇİN",
     "australia": "AVUSTRALYA", "avustralya": "AVUSTRALYA",
+    # Uluslararası bölgeler
+    "avrupa": "AVRUPA", "europe": "AVRUPA",
+    "dunya": "DÜNYA", "dünya": "DÜNYA", "world": "DÜNYA",
+    "guney amerika": "GÜNEY AMERİKA", "south america": "GÜNEY AMERİKA",
 }
 
 _ALLOWED_COUNTRIES: set[str] | None = None
@@ -225,16 +229,57 @@ def _get_allowed_countries() -> set[str]:
         _ALLOWED_COUNTRIES = raw | normalized
     return _ALLOWED_COUNTRIES
 
+# Uluslararası turnuvalar — country Avrupa/Dünya olsa bile kabul et
+_INTERNATIONAL_TOURNAMENTS = {
+    'sampiyonlar ligi', 'champions league', 'uefa champions',
+    'avrupa ligi', 'europa league', 'uefa europa',
+    'konferans ligi', 'conference league', 'uefa conference',
+    'uluslar ligi', 'nations league', 'uefa nations',
+    'dunya kupasi', 'world cup', 'dünya kupası',
+    'avrupa sampiyonasi', 'euro 20', 'uefa euro',
+    'avrupa sampiyonasi elemeler', 'euro qualif',
+    'dunya kupasi elemeler', 'world cup qualif',
+    'kulüpler dünya kupasi', 'club world cup', 'klubler dunya kupasi',
+    'super kupa', 'super cup', 'uefa super',
+    'copa america', 'copa libertadores', 'libertadores',
+    'copa sudamericana', 'sudamericana',
+    'concacaf', 'gold cup', 'altin kupa',
+    'afrika kupasi', 'africa cup', 'afcon',
+    'asya kupasi', 'asian cup', 'afc champions',
+}
+
+def _is_international_tournament(comp_name: str) -> bool:
+    name_low = _normalize_country(comp_name)
+    return any(t in name_low for t in _INTERNATIONAL_TOURNAMENTS)
+
 def _is_allowed_competition(comp: dict) -> bool:
-    country = (comp.get('countryName') or comp.get('country') or '').strip()
+    country_raw = comp.get('countryName') or ''
+    if not country_raw and isinstance(comp.get('country'), dict):
+        country_raw = comp['country'].get('name', '')
+    elif not country_raw:
+        country_raw = str(comp.get('country', ''))
+    country = country_raw.strip()
     if not country:
         return False
-    c_low = _normalize_country(country)
-    if c_low not in _get_allowed_countries():
+
+    comp_name_raw = (comp.get('competitionName') or comp.get('competition') or
+                     comp.get('name') or '')
+    comp_name = _normalize_country(comp_name_raw)  # Türkçe karakter normalize + lower
+
+    # Banned keywords kontrolü
+    if any(bw in comp_name for bw in _BANNED_KEYWORDS):
         return False
-    comp_name = (comp.get('competitionName') or comp.get('competition') or
-                 comp.get('name') or '').lower()
-    return not any(bw in comp_name for bw in _BANNED_KEYWORDS)
+
+    # Uluslararası turnuva ise her zaman kabul et
+    if _is_international_tournament(comp_name):
+        return True
+
+    # Ülke bazlı kontrol
+    c_low = _normalize_country(country)
+    if c_low in _get_allowed_countries():
+        return True
+
+    return False
 
 # ── Text normalization ────────────────────────────────────────────────────────
 def _norm(s: str) -> str:
@@ -266,6 +311,11 @@ _COUNTRY_ALIASES = {
     'brazil': 'brezilya', 'japan': 'japonya',
     'south korea': 'guney kore', 'china': 'cin',
     'australia': 'avustralya',
+    # Uluslararası bölgeler
+    'europe': 'avrupa', 'world': 'dunya',
+    'south america': 'guney amerika',
+    'north / central america': 'kuzey / orta amerika',
+    'asia': 'asya', 'africa': 'afrika',
 }
 
 _LIG_ALIASES = {
@@ -325,6 +375,12 @@ LEAGUE_LIST: list[tuple[str, list[str]]] = [
     ("GÜNEY KORE",    ["K Lig 1"]),
     ("ÇİN",           ["Süper Lig"]),
     ("AVUSTRALYA",    ["A-Lig"]),
+    # Uluslararası turnuvalar
+    ("AVRUPA",        ["Şampiyonlar Ligi", "Avrupa Ligi", "Konferans Ligi",
+                       "Uluslar Ligi", "Avrupa Şampiyonası", "Avrupa Şampiyonası Elemeler",
+                       "Süper Kupa", "UEFA Gençlik Ligi"]),
+    ("DÜNYA",         ["Dünya Kupası", "Dünya Kupası Elemeler", "Kulüpler Dünya Kupası"]),
+    ("GÜNEY AMERİKA", ["Libertadores Kupası", "Copa Sudamericana"]),
 ]
 
 def lig_key(country: str, league: str) -> str:
@@ -395,11 +451,15 @@ def lig_filtreli_key(lig_key_val: str, sel_leagues: set[str] | None) -> bool:
         return True
     if not sel_leagues:
         return False
+    # Uluslararası turnuvalar her zaman geçer
+    if _is_international_tournament(lig_key_val):
+        return True
     return any(_lig_components_match(lig_key_val, k) for k in sel_leagues)
 
 # ── API fetch ─────────────────────────────────────────────────────────────────
 def fetch_matches_api(target_date: dt.date, max_retries: int = 4,
                       lig_filtre: set | None = None) -> list[dict]:
+    """Mackolik API: data.competitions + data.matches yapisi."""
     params = {'sports[]': 'Soccer', 'matchDate': target_date.strftime('%Y-%m-%d')}
     data = None
     for attempt in range(max_retries):
@@ -408,8 +468,7 @@ def fetch_matches_api(target_date: dt.date, max_retries: int = 4,
                 _SESSION.get("https://www.mackolik.com", timeout=8)
             resp = _SESSION.get(_API_URL, params=params, timeout=10)
             if resp.status_code in (502, 500, 503):
-                wait = (attempt + 1) * 2
-                time.sleep(wait)
+                time.sleep((attempt + 1) * 2)
                 continue
             resp.raise_for_status()
             data = resp.json()
@@ -420,76 +479,106 @@ def fetch_matches_api(target_date: dt.date, max_retries: int = 4,
     if not data:
         return []
 
-    matches_raw = data.get('data', data)
-    if isinstance(matches_raw, dict):
-        matches_raw = matches_raw.get('matches', matches_raw)
-    if isinstance(matches_raw, dict):
-        comps = matches_raw.get('competitions') or matches_raw.get('competition') or []
-        if isinstance(comps, dict):
-            comps = list(comps.values())
-    elif isinstance(matches_raw, list):
-        comps = matches_raw
+    api_data = data.get('data', data)
+    if not isinstance(api_data, dict):
+        return []
+
+    # ── Competition dict ──
+    comps_raw = api_data.get('competitions', {})
+    if isinstance(comps_raw, list):
+        comps_raw = {str(i): c for i, c in enumerate(comps_raw)}
+
+    allowed_comps = {}  # comp_id -> (country, league, lig_key)
+    for cid, comp in comps_raw.items():
+        if not isinstance(comp, dict):
+            continue
+        if not _is_allowed_competition(comp):
+            continue
+        country_val = comp.get('country', '')
+        if isinstance(country_val, dict):
+            country = country_val.get('name', '')
+        else:
+            country = str(country_val)
+        league_name = comp.get('name', '')
+        lk = _fold_lig(country) + ' ' + _fold_lig(league_name)
+        if lig_filtre and not lig_filtreli_key(lk, lig_filtre):
+            continue
+        allowed_comps[cid] = (country, league_name, lk)
+
+    # ── Matches dict ──
+    matches_raw = api_data.get('matches', {})
+    if isinstance(matches_raw, list):
+        match_list = matches_raw
+    elif isinstance(matches_raw, dict):
+        match_list = list(matches_raw.values())
     else:
         return []
 
     summaries = []
-    for comp in comps:
-        if isinstance(comp, dict) and not _is_allowed_competition(comp):
+    for m in match_list:
+        if not isinstance(m, dict):
             continue
-        comp_matches = comp.get('matches', []) if isinstance(comp, dict) else []
-        if isinstance(comp_matches, dict):
-            comp_matches = list(comp_matches.values())
+        comp_id = str(m.get('competitionId', ''))
+        if comp_id not in allowed_comps:
+            continue
 
-        country = ''
-        league_slug = ''
-        if isinstance(comp, dict):
-            country = comp.get('countryName', comp.get('country', ''))
-            league_slug = comp.get('competitionName', comp.get('competition', comp.get('name', '')))
+        iddaa_code = m.get('iddaaCode') or ''
+        if not iddaa_code:
+            continue
 
-        for m in comp_matches:
-            if not isinstance(m, dict):
-                continue
-            iddaa_code = m.get('iddaaCode') or m.get('iddaa_code') or ''
-            if not iddaa_code:
-                continue
-            home = m.get('homeTeamName', m.get('home', ''))
-            away = m.get('awayTeamName', m.get('away', ''))
-            if not home or not away:
-                continue
+        # Takim isimleri — {name, slug} dict veya string
+        home_obj = m.get('homeTeam', {})
+        away_obj = m.get('awayTeam', {})
+        home = home_obj.get('name', '') if isinstance(home_obj, dict) else str(home_obj)
+        away = away_obj.get('name', '') if isinstance(away_obj, dict) else str(away_obj)
+        if not home or not away:
+            continue
 
-            match_url = m.get('matchUrl', m.get('url', ''))
-            if match_url:
-                full = urljoin(BASE_URL, match_url)
-            else:
-                full = ''
-            if full and '/iddaa/' not in full:
-                idx = full.rfind('/')
-                full = full[:idx] + '/iddaa' + full[idx:]
-            overview = full.replace('/iddaa', '') if full else ''
+        # URL olustur
+        match_slug = m.get('matchSlug', '')
+        comp_data = comps_raw.get(comp_id, {})
+        comp_slug = comp_data.get('competitionSlug', '')
+        country_slug = comp_data.get('countrySlug', '')
+        season_slug = comp_data.get('seasonSlug', '')
+        if match_slug and comp_slug and country_slug:
+            full = f"{BASE_URL}/futbol/{country_slug}/{comp_slug}/{season_slug}/mac/{match_slug}/iddaa"
+            overview = full.replace('/iddaa', '')
+        else:
+            full = ''
+            overview = ''
 
-            lig_key_val = _fold_lig(country) + ' ' + _fold_lig(league_slug)
-            if lig_filtre and not lig_filtreli_key(lig_key_val, lig_filtre):
-                continue
+        # Skor
+        score = m.get('score', {}) or {}
+        ft_home = score.get('home', '')
+        ft_away = score.get('away', '')
+        ft_score = f"{ft_home}-{ft_away}" if ft_home != '' and ft_away != '' else ''
+        ht = score.get('ht', {}) or {}
+        ht_home = ht.get('home', '')
+        ht_away = ht.get('away', '')
+        ht_score = f"{ht_home}-{ht_away}" if ht_home != '' and ht_away != '' else ''
 
-            ht_score = ''
-            ft_home = m.get('homeScore', '')
-            ft_away = m.get('awayScore', '')
-            ft_score = f"{ft_home}-{ft_away}" if ft_home != '' and ft_away != '' else ''
-            ht_home = m.get('homeHTScore', m.get('htHomeScore', ''))
-            ht_away = m.get('awayHTScore', m.get('htAwayScore', ''))
-            if ht_home != '' and ht_away != '':
-                ht_score = f"{ht_home}-{ht_away}"
+        # Mac saati (mstUtc ms -> TR saati HH:MM)
+        mac_saati = ''
+        mst_utc = m.get('mstUtc', 0)
+        if mst_utc:
+            try:
+                match_dt = dt.datetime.utcfromtimestamp(mst_utc / 1000) + dt.timedelta(hours=3)
+                mac_saati = match_dt.strftime('%H:%M')
+            except Exception:
+                pass
 
-            summaries.append({
-                'ev_sahibi': home, 'konuk_ekip': away,
-                'ms_kodu': str(iddaa_code),
-                'mac_saati': m.get('startTime', m.get('time', '')),
-                'ilk_yari_skor': ht_score,
-                'mac_skoru': ft_score,
-                'iddaa_link': full,
-                'overview_link': overview,
-                'lig_key': lig_key_val,
-            })
+        _, _, lig_key_val = allowed_comps[comp_id]
+
+        summaries.append({
+            'ev_sahibi': home, 'konuk_ekip': away,
+            'ms_kodu': str(iddaa_code),
+            'mac_saati': mac_saati,
+            'ilk_yari_skor': ht_score,
+            'mac_skoru': ft_score,
+            'iddaa_link': full,
+            'overview_link': overview,
+            'lig_key': lig_key_val,
+        })
     return summaries
 
 # ── Selenium helpers ──────────────────────────────────────────────────────────

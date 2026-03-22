@@ -1,4 +1,4 @@
-name: "Missing 2023-24 Part A (Eki-Mar)"
+name: "Rescrape 6: 2021-2022"
 
 on:
   workflow_dispatch:
@@ -23,27 +23,22 @@ jobs:
       - name: Restore previous data
         uses: actions/download-artifact@v4
         with:
-          name: missing-2023-24a
+          name: iddaa-2021-2022
           path: output/
         continue-on-error: true
 
       - name: Run scraper
         run: |
           mkdir -p output
-          python scraper_cli.py \
-            --start 2023-10-26 \
-            --end 2024-03-31 \
-            --output output/missing_2023_24a.xlsx \
-            --max-hours 5.5 \
-            --resume
+          python scraper_cli.py             --start 2021-08-01             --end 2022-07-31             --output output/iddaa_2021_2022.xlsx             --max-hours 5.5             --resume
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: missing-2023-24a
+          name: iddaa-2021-2022
           path: |
-            output/missing_2023_24a.xlsx
+            output/iddaa_2021_2022.xlsx
             progress.json
           retention-days: 90
           overwrite: true
@@ -53,6 +48,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f output/missing_2023_24a.xlsx progress.json || true
-          git diff --staged --quiet || git commit -m "Missing 2023-24a $(date +'%Y-%m-%d %H:%M')"
+          git add -f output/iddaa_2021_2022.xlsx progress.json || true
+          git diff --staged --quiet || git commit -m "Rescrape 6: 2021-2022 $(date +'%Y-%m-%d %H:%M')"
           git push || true

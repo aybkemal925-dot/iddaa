@@ -1,4 +1,4 @@
-name: "Scraper 10: 2016-2017"
+name: "Rescrape 5: 2020-2021"
 
 on:
   workflow_dispatch:
@@ -23,27 +23,22 @@ jobs:
       - name: Restore previous data
         uses: actions/download-artifact@v4
         with:
-          name: iddaa-2016-2017
+          name: iddaa-2020-2021
           path: output/
         continue-on-error: true
 
       - name: Run scraper
         run: |
           mkdir -p output
-          python scraper_cli.py \
-            --start 2016-08-01 \
-            --end 2017-07-31 \
-            --output output/iddaa_2016_2017.xlsx \
-            --max-hours 5.5 \
-            --resume
+          python scraper_cli.py             --start 2020-08-01             --end 2021-07-31             --output output/iddaa_2020_2021.xlsx             --max-hours 5.5             --resume
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iddaa-2016-2017
+          name: iddaa-2020-2021
           path: |
-            output/iddaa_2016_2017.xlsx
+            output/iddaa_2020_2021.xlsx
             progress.json
           retention-days: 90
           overwrite: true
@@ -53,6 +48,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f output/iddaa_2016_2017.xlsx progress.json || true
-          git diff --staged --quiet || git commit -m "Scraper 10: 2016-2017 $(date +'%Y-%m-%d %H:%M')"
+          git add -f output/iddaa_2020_2021.xlsx progress.json || true
+          git diff --staged --quiet || git commit -m "Rescrape 5: 2020-2021 $(date +'%Y-%m-%d %H:%M')"
           git push || true
