@@ -1,0 +1,59 @@
+name: "UEFA: 2022-2026 (Sampiyonlar + Avrupa + Konferans Ligi)"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install requests pandas openpyxl beautifulsoup4
+
+      - name: Restore previous progress
+        uses: actions/download-artifact@v4
+        with:
+          name: uefa-2022-2026
+          path: output/
+        continue-on-error: true
+
+      - name: Run UEFA scraper
+        run: |
+          mkdir -p output
+          python scripts/scrape_uefa.py \
+            --start 2022-08-01 \
+            --end 2026-03-31 \
+            --output output/iddaa_uefa_2022_2026.xlsx \
+            --progress progress_uefa_2022_2026.json \
+            --workers 4 \
+            --max-hours 5.5 \
+            --resume
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uefa-2022-2026
+          path: |
+            output/iddaa_uefa_2022_2026.xlsx
+            progress_uefa_2022_2026.json
+          retention-days: 90
+          overwrite: true
+
+      - name: Commit to repo
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f output/iddaa_uefa_2022_2026.xlsx progress_uefa_2022_2026.json || true
+          git diff --staged --quiet || git commit -m "UEFA 2022-2026 $(date +'%Y-%m-%d %H:%M')"
+          git push || true
