@@ -1,20 +1,7 @@
-name: "UEFA Maclari: Sampiyonlar + Avrupa + Konferans Ligi"
+name: "UEFA: 2017-2019 (Sampiyonlar + Avrupa + Konferans Ligi)"
 
 on:
   workflow_dispatch:
-    inputs:
-      start_date:
-        description: 'Baslangic tarihi (YYYY-MM-DD)'
-        required: true
-        default: '2017-08-01'
-      end_date:
-        description: 'Bitis tarihi (YYYY-MM-DD)'
-        required: true
-        default: '2026-03-31'
-      workers:
-        description: 'Paralel thread sayisi'
-        required: false
-        default: '4'
 
 jobs:
   scrape:
@@ -32,33 +19,33 @@ jobs:
       - name: Install dependencies
         run: pip install requests pandas openpyxl beautifulsoup4
 
-      - name: Restore previous Excel
+      - name: Restore previous progress
         uses: actions/download-artifact@v4
         with:
-          name: iddaa-clean-excel
+          name: uefa-2017-2019
           path: output/
         continue-on-error: true
 
-      - name: Ensure Excel exists
-        run: |
-          if [ ! -f output/iddaagecmismaclar_clean.xlsx ]; then
-            echo "Excel bulunamadi, repodaki kullanilacak"
-            cp output/iddaagecmismaclar_clean.xlsx output/iddaagecmismaclar_clean.xlsx 2>/dev/null || true
-          fi
-
       - name: Run UEFA scraper
         run: |
+          mkdir -p output
           python scripts/scrape_uefa.py \
-            --start ${{ github.event.inputs.start_date }} \
-            --end ${{ github.event.inputs.end_date }} \
-            --workers ${{ github.event.inputs.workers }}
+            --start 2017-08-01 \
+            --end 2019-07-31 \
+            --output output/iddaa_uefa_2017_2019.xlsx \
+            --progress progress_uefa_2017_2019.json \
+            --workers 4 \
+            --max-hours 5.5 \
+            --resume
 
-      - name: Upload updated Excel
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iddaa-clean-excel
-          path: output/iddaagecmismaclar_clean.xlsx
+          name: uefa-2017-2019
+          path: |
+            output/iddaa_uefa_2017_2019.xlsx
+            progress_uefa_2017_2019.json
           retention-days: 90
           overwrite: true
 
@@ -67,6 +54,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f output/iddaagecmismaclar_clean.xlsx || true
-          git diff --staged --quiet || git commit -m "UEFA maclar eklendi: ${{ github.event.inputs.start_date }} - ${{ github.event.inputs.end_date }} $(date +'%Y-%m-%d %H:%M')"
+          git add -f output/iddaa_uefa_2017_2019.xlsx progress_uefa_2017_2019.json || true
+          git diff --staged --quiet || git commit -m "UEFA 2017-2019 $(date +'%Y-%m-%d %H:%M')"
           git push || true
