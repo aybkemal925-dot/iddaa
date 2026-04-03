@@ -1,0 +1,118 @@
+name: "Tum Verileri Birlestir (Final Excel)"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install pandas openpyxl
+
+      - name: Download 2017-2018 data
+        uses: actions/download-artifact@v4
+        with:
+          name: missing-2017-2018
+          path: output/
+        continue-on-error: true
+
+      - name: Download 2018-2019 data
+        uses: actions/download-artifact@v4
+        with:
+          name: missing-2018-2019
+          path: output/
+        continue-on-error: true
+
+      - name: Download 2019-2020 data
+        uses: actions/download-artifact@v4
+        with:
+          name: missing-2019-2020
+          path: output/
+        continue-on-error: true
+
+      - name: Merge all Excel files
+        run: |
+          python3 - <<'EOF'
+          import pandas as pd
+          from pathlib import Path
+          import os
+
+          output_dir = Path("output")
+          base_file = output_dir / "iddaagecmismaclar_clean.xlsx"
+
+          # Ana Excel
+          print(f"Ana Excel okunuyor: {base_file}")
+          df_main = pd.read_excel(base_file)
+          print(f"  Ana satir: {len(df_main):,}")
+
+          # Eklenecek dosyalar
+          extra_files = [
+              output_dir / "iddaa_missing_2017_2018.xlsx",
+              output_dir / "iddaa_missing_2018_2019.xlsx",
+              output_dir / "iddaa_missing_2019_2020.xlsx",
+          ]
+
+          dfs = [df_main]
+          for f in extra_files:
+              if f.exists():
+                  df_extra = pd.read_excel(f)
+                  print(f"  {f.name}: {len(df_extra):,} satir")
+                  dfs.append(df_extra)
+              else:
+                  print(f"  {f.name}: BULUNAMADI, atlaniyor")
+
+          # Birlestir
+          df_merged = pd.concat(dfs, ignore_index=True)
+          print(f"\nBirlestirilen toplam: {len(df_merged):,}")
+
+          # Duplikat temizle (Ev Sahibi + Deplasman + Tarih + Saat)
+          before = len(df_merged)
+          df_merged = df_merged.drop_duplicates(
+              subset=["Ev Sahibi", "Deplasman", "Tarih", "Saat"],
+              keep="first"
+          )
+          print(f"Duplikat silindi: {before - len(df_merged)}")
+          print(f"Final satir: {len(df_merged):,}")
+
+          # Tarihe gore sirala
+          def parse_t(t):
+              try:
+                  return pd.to_datetime(str(t), dayfirst=True)
+              except:
+                  return pd.NaT
+
+          df_merged["_sort"] = df_merged["Tarih"].apply(parse_t)
+          df_merged = df_merged.sort_values("_sort").drop(columns=["_sort"])
+          df_merged = df_merged.reset_index(drop=True)
+
+          # Kaydet
+          out_path = output_dir / "iddaagecmismaclar_final.xlsx"
+          df_merged.to_excel(out_path, index=False)
+          print(f"\nKaydedildi: {out_path}")
+          EOF
+
+      - name: Upload final Excel
+        uses: actions/upload-artifact@v4
+        with:
+          name: iddaa-final-excel
+          path: output/iddaagecmismaclar_final.xlsx
+          retention-days: 365
+          overwrite: true
+
+      - name: Commit final Excel
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f output/iddaagecmismaclar_final.xlsx || true
+          git diff --staged --quiet || git commit -m "final: tum veriler birlestirildi $(date +'%Y-%m-%d %H:%M')"
+          git push || true
